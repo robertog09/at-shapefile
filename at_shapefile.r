@@ -80,8 +80,8 @@ rm(gemeinden, tempfile)
 
 
 ## Save shapefile
-st_write(obj = at_shapefile, dsn = "Austria/at_shapefile.shp")
+# st_write(obj = at_shapefile, dsn = "Austria/at_shapefile.shp")
 
 
 ## Load shapefile
-at_shapefile_test <- st_read(dsn = "Austria", layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon")
+# at_shapefile_test <- st_read(dsn = "Austria", layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon")
