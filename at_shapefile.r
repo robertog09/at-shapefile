@@ -2,6 +2,10 @@
 # Last update: 22.02.2021
 
 
+# Set working directory
+setwd("C:/Users/robertog09/Data/GIS")
+
+
 ## Packages
 # Load packages
 packages_install <- function(packages){
@@ -73,3 +77,11 @@ at_shapefile <- st_read(dsn = tempfile, layer = "STATISTIK_AUSTRIA_GEM_20200101P
 
 
 rm(gemeinden, tempfile)
+
+
+## Save shapefile
+st_write(obj = at_shapefile, dsn = "Austria/at_shapefile.shp")
+
+
+## Load shapefile
+at_shapefile_test <- st_read(dsn = "Austria", layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon")
