@@ -1,5 +1,5 @@
 # AT Shapefile per district (Bezirk)
-# Last update: 22.02.2021
+# Last update: 23.02.2021
 
 
 # Set working directory
@@ -20,12 +20,17 @@ packages_install(packages_required)
 
 
 
+##########################
+# ---- at_postalcodes ----
+##########################
 ## Austrian postal codes per district
 # Source: Post AG, https://www.post.at/g/c/postlexikon
 
-download.file("https://assets.post.at/-/media/Dokumente/De/Geschaeftlich/Werben/PLZ_Verzeichnis_20210201.xls", "PostalCode.xls", mode = "wb")
+# Download file
+download.file("https://assets.post.at/-/media/Dokumente/De/Geschaeftlich/Werben/PLZ_Verzeichnis_20210201.xls", "AT Postal Codes.xls", mode = "wb")
 
-at_postalcodes <- read_excel(path = "PostalCode.xls", sheet = "Plz_Anhang", range = "A1:I2554", col_names = TRUE, col_types = "text") %>%
+# Import
+at_postalcodes <- read_excel(path = "AT Postal Codes.xls", sheet = "Plz_Anhang", range = "A1:I2554", col_names = TRUE, col_types = "text") %>%
 	clean_names() %>%
 	filter(adressierbar == "Ja") %>%
 	rename(PostalCode = plz, State = bundesland) %>%
@@ -46,42 +51,47 @@ at_postalcodes <- read_excel(path = "PostalCode.xls", sheet = "Plz_Anhang", rang
 	)
 
 
+########################
+# ---- at_gemeinden ----
+########################
 ## Gemeinden sortiert nach Gemeindekennziffer mit Status und Postleitzahlen
 # Source: Statistik Austria, http://www.statistik.at/web_de/klassifikationen/regionale_gliederungen/gemeinden/index.html
 
 # Download file
-download.file("http://www.statistik.at/verzeichnis/reglisten/gemliste_knz.xls", "Gemeinden.xls", mode = "wb")
+download.file("http://www.statistik.at/verzeichnis/reglisten/gemliste_knz.xls", "AT Gemeinden.xls", mode = "wb")
 
 # Import
-gemeinden <- read_excel(path = "Gemeinden.xls", sheet = "gemliste_knz", range = "A4:F2121", col_names = TRUE, col_types = "text") %>%
+at_gemeinden <- read_excel(path = "AT Gemeinden.xls", sheet = "gemliste_knz", range = "A4:F2121", col_names = TRUE, col_types = "text") %>%
 	clean_names() %>%
 	select(gemeinde_code, plz_des_gem_amtes) %>%
 	rename(id = gemeinde_code, PostalCode = plz_des_gem_amtes)
 
 
+########################
+# ---- at_shapefile ----
+########################
 ## Gliederung Österreichs in Gemeinden
 # Source: Statistik Austria, https://data.statistik.gv.at/web/meta.jsp?dataset=OGDEXT_GEM_1
 
 # Download file
-download.file("https://data.statistik.gv.at/data/OGDEXT_GEM_1_STATISTIK_AUSTRIA_20200101.zip", "Shapefile.zip", mode = "wb")
-tempfile <- tempfile()
-unzip(zip = "Shapefile.zip", exdir = tempfile)
+download.file("https://data.statistik.gv.at/data/OGDEXT_GEM_1_STATISTIK_AUSTRIA_20200101.zip", "AT Shapefile.zip", mode = "wb")
+unzip(zip = "AT Shapefile.zip", exdir = "Shapefile")
 
 # Import
-at_shapefile <- st_read(dsn = tempfile, layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon") %>%
-	left_join(gemeinden) %>%
+at_shapefile <- st_read(dsn = "Shapefile", layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon") %>%
+	left_join(at_gemeinden) %>%
 	group_by(PostalCode) %>%
 	summarise(geometry = st_union(geometry)) %>%
 	left_join(at_postalcodes) # %>%
 	# filter(State %in% c("Wien"))
 
-
-rm(gemeinden, tempfile)
+# Remove objects
+rm(at_gemeinden)
 
 
 ## Save shapefile
-# st_write(obj = at_shapefile, dsn = "Austria/at_shapefile.shp")
+# st_write(obj = at_shapefile, dsn = "AT Shapefile New/at_shapefile.shp")
 
 
 ## Load shapefile
-# at_shapefile_test <- st_read(dsn = "Austria", layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon")
+# at_shapefile_test <- st_read(dsn = "AT Shapefile New", layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon")
