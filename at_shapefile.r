@@ -75,10 +75,10 @@ at_gemeinden <- read_excel(path = "AT Gemeinden.xls", sheet = "gemliste_knz", ra
 
 # Download file
 download.file("https://data.statistik.gv.at/data/OGDEXT_GEM_1_STATISTIK_AUSTRIA_20200101.zip", "AT Shapefile.zip", mode = "wb")
-unzip(zip = "AT Shapefile.zip", exdir = "Shapefile")
+unzip(zip = "AT Shapefile.zip", exdir = "AT Shapefile")
 
 # Import
-at_shapefile <- st_read(dsn = "Shapefile", layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon") %>%
+at_shapefile <- st_read(dsn = "AT Shapefile", layer = "STATISTIK_AUSTRIA_GEM_20200101Polygon") %>%
 	left_join(at_gemeinden) %>%
 	group_by(PostalCode) %>%
 	summarise(geometry = st_union(geometry)) %>%
