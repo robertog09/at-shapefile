@@ -19,7 +19,6 @@ packages_required <- c("data.table", "janitor", "readxl", "sf", "tidyverse")
 packages_install(packages_required)
 
 
-
 ##########################
 # ---- at_postalcodes ----
 ##########################
@@ -27,7 +26,7 @@ packages_install(packages_required)
 # Source: Post AG, https://www.post.at/g/c/postlexikon
 
 # Download file
-download.file("https://assets.post.at/-/media/Dokumente/De/Geschaeftlich/Werben/PLZ_Verzeichnis_20210201.xls", "AT Postal Codes.xls", mode = "wb")
+# download.file("https://assets.post.at/-/media/Dokumente/De/Geschaeftlich/Werben/PLZ_Verzeichnis_20210201.xls", "AT Postal Codes.xls", mode = "wb")
 
 # Import
 at_postalcodes <- read_excel(path = "AT Postal Codes.xls", sheet = "Plz_Anhang", range = "A1:I2554", col_names = TRUE, col_types = "text") %>%
@@ -38,15 +37,15 @@ at_postalcodes <- read_excel(path = "AT Postal Codes.xls", sheet = "Plz_Anhang",
 	arrange(PostalCode) %>%
 	mutate(
 		State = case_when(
-			State == "W" ~ "Wien",
-			State == "N" ~ "Niederösterreich",
+			State == "W" ~ "Vienna",
+			State == "N" ~ "Lower Austria",
 			State == "B" ~ "Burgenland",
-			State == "O" ~ "Oberösterreich",
+			State == "O" ~ "Upper Austria",
 			State == "Sa" ~ "Salzburg",
-			State == "T" ~ "Tirol",
+			State == "T" ~ "Tyrol",
 			State == "V" ~ "Vorarlberg",
-			State == "St" ~ "Steiermark",
-			State == "K" ~ "Kärnten",
+			State == "St" ~ "Styria",
+			State == "K" ~ "Carinthia",
 		),
 	)
 
@@ -83,7 +82,7 @@ at_shapefile <- st_read(dsn = "AT Shapefile", layer = "STATISTIK_AUSTRIA_GEM_202
 	group_by(PostalCode) %>%
 	summarise(geometry = st_union(geometry)) %>%
 	left_join(at_postalcodes) # %>%
-	# filter(State %in% c("Wien"))
+	# filter(State %in% c("Vienna"))
 
 # Remove objects
 rm(at_gemeinden)
