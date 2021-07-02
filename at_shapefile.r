@@ -26,14 +26,15 @@ packages_install(packages_required)
 # Source: Post AG, https://www.post.at/g/c/postlexikon
 
 # Download file
-download.file("https://assets.post.at/-/media/Dokumente/De/Geschaeftlich/Werben/PLZ_Verzeichnis-20210301.xls", "AT Postal Codes.xls", mode = "wb")
+download.file("https://assets.post.at/-/media/Dokumente/De/Geschaeftlich/Werben/PLZ_Verzeichnis-20210629.xls", "AT Postal Codes.xls", mode = "wb")
 
 # Import
-at_postalcodes <- read_excel(path = "AT Postal Codes.xls", sheet = "Plz_Anhang", range = "A1:I2554", col_names = TRUE, col_types = "text") %>%
+at_postalcodes <- read_excel(path = "AT Postal Codes.xls", sheet = "Plz_Anhang", col_names = TRUE, col_types = "text") %>%
 	clean_names() %>%
 	filter(adressierbar == "Ja") %>%
 	rename(PostalCode = plz, State = bundesland, City = ort) %>%
-	select(PostalCode, State, City) %>%
+	mutate(Country = "AT") %>%
+	select(Country, State, City, PostalCode) %>%
 	arrange(PostalCode) %>%
 	mutate(
 		State = case_when(
@@ -49,15 +50,17 @@ at_postalcodes <- read_excel(path = "AT Postal Codes.xls", sheet = "Plz_Anhang",
 		),
 	)
 
-paste("'", as.character((at_postalcodes %>% filter(State == "Vienna"))$PostalCode), "'", collapse = ", ", sep = "")
-paste("'", as.character((at_postalcodes %>% filter(State == "Lower Austria"))$PostalCode), "'", collapse = ", ", sep = "")
-paste("'", as.character((at_postalcodes %>% filter(State == "Burgenland"))$PostalCode), "'", collapse = ", ", sep = "")
-paste("'", as.character((at_postalcodes %>% filter(State == "Upper Austria"))$PostalCode), "'", collapse = ", ", sep = "")
-paste("'", as.character((at_postalcodes %>% filter(State == "Salzburg"))$PostalCode), "'", collapse = ", ", sep = "")
-paste("'", as.character((at_postalcodes %>% filter(State == "Tyrol"))$PostalCode), "'", collapse = ", ", sep = "")
-paste("'", as.character((at_postalcodes %>% filter(State == "Vorarlberg"))$PostalCode), "'", collapse = ", ", sep = "")
-paste("'", as.character((at_postalcodes %>% filter(State == "Styria"))$PostalCode), "'", collapse = ", ", sep = "")
-paste("'", as.character((at_postalcodes %>% filter(State == "Carinthia"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Vienna"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Lower Austria"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Burgenland"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Upper Austria"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Salzburg"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Tyrol"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Vorarlberg"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Styria"))$PostalCode), "'", collapse = ", ", sep = "")
+# paste("'", as.character((at_postalcodes %>% filter(State == "Carinthia"))$PostalCode), "'", collapse = ", ", sep = "")
+
+
 
 
 ########################
@@ -76,6 +79,8 @@ at_gemeinden <- read_delim("AT Gemeinden.csv", delim = ";", skip = 2) %>%
 	mutate(across(everything(), as.character)) %>%
 	rename(id = gemeindecode, PostalCode = plz_des_gem_amtes) %>%
 	select(id, PostalCode)
+
+
 
 
 #################################
@@ -109,6 +114,8 @@ at_politische_bezirke <- read_delim("AT Politische Bezirke.csv", delim = ";", sk
 	)
 
 
+
+
 ###########################
 # ---- at_ortschaften ----
 ###########################
@@ -129,6 +136,8 @@ at_ortschaften <- read_delim("AT Ortschaften.csv", delim = ";", skip = 2) %>%
 	distinct(PolitischerBezirkCode, PostalCode) %>%
 	left_join(at_politische_bezirke) %>%
 	select(State, PolitischerBezirk, PostalCode)
+
+
 
 
 ########################
@@ -152,15 +161,21 @@ at_shapefile <- st_read(dsn = "AT Shapefile", layer = "STATISTIK_AUSTRIA_GEM_202
 # Remove objects
 rm(at_gemeinden)
 
-# Test for duplicate PostalCode
+
+
+
+## Test for duplicate PostalCode
 # at_shapefile %>% st_drop_geometry() %>% group_by(PostalCode) %>% filter(n() >= 2) %>% ungroup()
 
-# Plot
+## Plot
 # plot(at_shapefile)
 
 ## Save shapefile
 # st_write(obj = at_shapefile, dsn = "AT Shapefile New/at_shapefile.shp")
 
-
 ## Load shapefile
 # at_shapefile_test <- st_read(dsn = "AT Shapefile New", layer = "STATISTIK_AUSTRIA_GEM_20210101")
+
+## Add Latitude/Longitude to at_postalcodes
+# Coordinate Reference System (CRS): EPSG: 4326
+at_postalcodes <- at_postalcodes %>% left_join(cbind((at_shapefile %>% st_drop_geometry()), st_coordinates(st_transform(st_centroid(st_geometry(at_shapefile), of_largest_polygon = TRUE), crs = 4326))) %>% rename(Longitude = X, Latitude = Y)) %>% select(Country, State, City, PostalCode, Latitude, Longitude)
